@@ -3,57 +3,120 @@ import turtle
 import json
 import math
 
+
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, "ats")
 #client.connect("srv-lora.isep.fr")
 client.connect("broker.hivemq.com")
 couleur = ['red', 'green', 'blue']
+zx = [-350, 300]
+zy = [-250, 250]
+px = [-300, 350]
+py = [265, -235 ]
 coordonneesmarg = []
 coordonneesmedor = []
 coordonneesfelix = []
+xy =[]
+# Centre du cercle
+centre_x, centre_y = 0, 0
+rayon = 150
+
 
 def point_sors_du_cercle(x, y, centre_x, centre_y, rayon):
     distance = math.sqrt((x - centre_x) ** 2 + (y - centre_y) ** 2)
     return distance > rayon
 
 def dessinermedor(x, y, couleur):
+
     turtle.penup()
     turtle.goto(x, y)
-    turtle.dot(10, 'blue')
+    turtle.dot(10, couleur[2])
 
 def dessinerfelix(x, y, couleur):
+
     turtle.penup()
     turtle.goto(x, y)
-    turtle.dot(10, 'green')
+    turtle.dot(10, couleur[1])
 
 def dessinermarguerite(x, y, couleur):
+
     turtle.penup()
     turtle.goto(x, y)
-    turtle.dot(10, 'red')
+    turtle.dot(10, couleur[0])
 
-def dessinerblanc(x, y, couleur):
+def dessinerblanc(x, y, controlalerte):
+
     turtle.penup()
     turtle.goto(x, y)
     turtle.dot(10, 'white')
+
+def dessinertriblanc(z , e):
+
+    turtle.fillcolor('white')
+
+    turtle.penup()
+    turtle.goto(z, e)
+    turtle.pendown()
+    turtle.pencolor('white')
+
+    turtle.begin_fill()
+    for _ in range(3):
+        turtle.forward(100)
+        turtle.left(120)
+        turtle.color('white')
+    turtle.end_fill()
 
 def savemarguerite(x, y):
     coordonneesmarg.append(x)
     coordonneesmarg.append(y)
 
-
 def savemedor(x, y):
     coordonneesmedor.append(x)
     coordonneesmedor.append(y)
-
 
 def savefelix(x, y):
     coordonneesfelix.append(x)
     coordonneesfelix.append(y)
 
+def Alert (couleur, zx, zy, px, py, controlalerte, xy):
 
-def on_message_callback(client_inst, userdata, message ):
+    if xy[0] == 'Medor':
+        controlalerte[0] += 1
+
+    if xy[0] == 'Marguerite':
+        controlalerte[2] += 1
+
+    if xy[0] == 'Felix':
+        controlalerte[1] += 1
+
+    else:
+        pass
+
+    turtle.fillcolor(couleur)
+
+    turtle.penup()
+    turtle.goto(zx, zy)
+    turtle.pendown()
+
+    # Dessiner le triangle
+    turtle.begin_fill()
+    for _ in range(3):
+        turtle.forward(100)
+        turtle.left(120)
+    turtle.end_fill()
+
+    # Écrire le point d'exclamation à l'intérieur du triangle
+    turtle.penup()
+    turtle.goto(px, py)
+    turtle.color("black")  # Changer la couleur du texte en blanc
+    turtle.write("!", align="center", font=("Arial", 24, "bold"))
+
+    # Cacher la tortue
+    turtle.hideturtle()
+
+def on_message_callback(client_inst, userdata, message):
     valeur = message.payload.decode("ansi")
     #print(message.topic + " " + valeur)
-
+    controlalerte = [0,0,0]
     liste_dico = json.loads(valeur)
     msg= liste_dico["object"]
     msg_2= msg["message"]
@@ -61,49 +124,58 @@ def on_message_callback(client_inst, userdata, message ):
     #turtle.goto(int(xy[3]), int(xy[4]))
     x = int(xy[1])
     y = int(xy[2])
+
     if xy[0]=='Medor':
         dessinermedor(x, y, couleur)
-        savemedor(x ,y)
+        savemedor(x, y)
         if point_sors_du_cercle(x, y, centre_x, centre_y, rayon):
             print("Medor est sorti de la zone.")
+            Alert(couleur[2], zx[0], zy[1],px[0], py[0],controlalerte, xy)
 
     if len(coordonneesmedor) > 2:
         a = coordonneesmedor[0]
         b = coordonneesmedor[1]
-        dessinerblanc(a , b, couleur)
+        dessinerblanc(a, b, controlalerte)
         del coordonneesmedor[1]
         del coordonneesmedor[0]
+        if controlalerte[0] == 1:
+            dessinertriblanc(-350, 250)
+            controlalerte[0] -= 1
 
     if xy[0]=='Felix':
         dessinerfelix(x, y, couleur)
         savefelix(x, y)
         if point_sors_du_cercle(x, y, centre_x, centre_y, rayon):
             print("Felix est sorti de la zone.")
+            Alert(couleur[1], zx[1], zy[1],px[1], py[0], controlalerte, xy)
 
     if len(coordonneesfelix) > 2:
         a = coordonneesfelix[0]
         b = coordonneesfelix[1]
-        dessinerblanc(a , b, couleur)
+        dessinerblanc(a, b, controlalerte)
         del coordonneesfelix[1]
         del coordonneesfelix[0]
+        if controlalerte[1] == 1:
+            dessinertriblanc(300, 250)
+            controlalerte[1] -= 1
 
     if xy[0]=='Marguerite':
         dessinermarguerite(x, y, couleur)
         savemarguerite(x, y)
         if point_sors_du_cercle(x, y, centre_x, centre_y, rayon):
             print("Marguerite est sortie de la zone.")
-
+            Alert(couleur[0], zx[0], zy[0], px[0], py[1], controlalerte, xy)
 
     if len(coordonneesmarg) > 2:
         a = coordonneesmarg[0]
         b = coordonneesmarg[1]
-        dessinerblanc(a , b, couleur)
+        dessinerblanc(a, b, controlalerte)
         del coordonneesmarg[1]
         del coordonneesmarg[0]
+        if controlalerte[2] == 1:
+            dessinertriblanc(-350, -250)
+            controlalerte[2] -= 1
 
-# Centre du cercle
-centre_x, centre_y = 0, 0
-rayon = 300
 
 # Initialisation de Turtle
 turtle.speed(0)
@@ -114,6 +186,7 @@ turtle.penup()
 turtle.goto(centre_x, centre_y - rayon)
 turtle.pendown()
 turtle.circle(rayon)
+
 
 client.on_message = on_message_callback
 
