@@ -8,17 +8,17 @@ def genere_msg_ini(id):
     y = 0
     return f"{id}:{x}:{y}"
 
-def genere_msg(id):
+def genere_msg(id):#génère les position
     x = random.randint(-200,200)
     y = random.randint(-200,200)
     return f"{id}:{x}:{y}"
 
 
-def ajoute_json(msg):
+def ajoute_json(msg):#ajoute un nouveau message
     msg_dico = {"object":{"message":msg}}
     return json.dumps(msg_dico)
 
-def publie_msg(msg_json):
+def publie_msg(msg_json):#publie le nouveau message
     print(f"Publie : \"{msg_json}\"...")
     client.publish("emulateur_colliers", msg_json)
 
@@ -30,13 +30,13 @@ client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, "hal")
 #client.connect("srv-lora.isep.fr")
 client.connect("broker.hivemq.com")
 
-for i in range(3):
+for i in range(3):  #génère les positions initiales
     msg = genere_msg_ini(colliers[i])
     msg_json = ajoute_json(msg)
     publie_msg(msg_json)
     time.sleep(3)
 
-while True:
+while True:#génère les messages
     for collier in colliers:
         msg = genere_msg(collier)
         msg_json = ajoute_json(msg)
