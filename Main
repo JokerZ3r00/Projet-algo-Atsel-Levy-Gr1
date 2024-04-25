@@ -25,7 +25,7 @@ def point_sors_du_cercle(x, y, centre_x, centre_y, rayon):
     distance = math.sqrt((x - centre_x) ** 2 + (y - centre_y) ** 2)
     return distance > rayon
 
-def dessinermedor(x, y, couleur):
+def dessinermedor(x, y, couleur):# dessinne le point représentent Medor
 
     turtle.penup()
     turtle.goto(x, y)
@@ -43,13 +43,13 @@ def dessinermarguerite(x, y, couleur):
     turtle.goto(x, y)
     turtle.dot(10, couleur[0])
 
-def dessinerblanc(x, y, controlalerte):
+def dessinerblanc(x, y, controlalerte): # dessinne un point blanc à la position précédente
 
     turtle.penup()
     turtle.goto(x, y)
     turtle.dot(10, 'white')
 
-def dessinertriblanc(z , e):
+def dessinertriblanc(z , e): #dessine un triangle Blanc sur l'alerte précédente
 
     turtle.fillcolor('white')
 
@@ -65,7 +65,7 @@ def dessinertriblanc(z , e):
         turtle.color('white')
     turtle.end_fill()
 
-def savemarguerite(x, y):
+def savemarguerite(x, y): # enregistre la nouvel position
     coordonneesmarg.append(x)
     coordonneesmarg.append(y)
 
@@ -117,6 +117,7 @@ def on_message_callback(client_inst, userdata, message):
     valeur = message.payload.decode("ansi")
     #print(message.topic + " " + valeur)
     controlalerte = [0,0,0]
+    #cette partie découpe le message reçu en informartion utiles au programme
     liste_dico = json.loads(valeur)
     msg= liste_dico["object"]
     msg_2= msg["message"]
@@ -124,7 +125,7 @@ def on_message_callback(client_inst, userdata, message):
     #turtle.goto(int(xy[3]), int(xy[4]))
     x = int(xy[1])
     y = int(xy[2])
-
+    #ce bloque ci dessous permet d'afficher la position de l'animal, des suprrimer sa position precedente et de savoir si il est sortie de la zone.
     if xy[0]=='Medor':
         dessinermedor(x, y, couleur)
         savemedor(x, y)
@@ -141,7 +142,7 @@ def on_message_callback(client_inst, userdata, message):
         if controlalerte[0] == 1:
             dessinertriblanc(-350, 250)
             controlalerte[0] -= 1
-
+    #
     if xy[0]=='Felix':
         dessinerfelix(x, y, couleur)
         savefelix(x, y)
@@ -158,7 +159,7 @@ def on_message_callback(client_inst, userdata, message):
         if controlalerte[1] == 1:
             dessinertriblanc(300, 250)
             controlalerte[1] -= 1
-
+    #
     if xy[0]=='Marguerite':
         dessinermarguerite(x, y, couleur)
         savemarguerite(x, y)
