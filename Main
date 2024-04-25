@@ -1,0 +1,123 @@
+import paho.mqtt.client as mqtt
+import turtle
+import json
+import math
+
+client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, "ats")
+#client.connect("srv-lora.isep.fr")
+client.connect("broker.hivemq.com")
+couleur = ['red', 'green', 'blue']
+coordonneesmarg = []
+coordonneesmedor = []
+coordonneesfelix = []
+
+def point_sors_du_cercle(x, y, centre_x, centre_y, rayon):
+    distance = math.sqrt((x - centre_x) ** 2 + (y - centre_y) ** 2)
+    return distance > rayon
+
+def dessinermedor(x, y, couleur):
+    turtle.penup()
+    turtle.goto(x, y)
+    turtle.dot(10, 'blue')
+
+def dessinerfelix(x, y, couleur):
+    turtle.penup()
+    turtle.goto(x, y)
+    turtle.dot(10, 'green')
+
+def dessinermarguerite(x, y, couleur):
+    turtle.penup()
+    turtle.goto(x, y)
+    turtle.dot(10, 'red')
+
+def dessinerblanc(x, y, couleur):
+    turtle.penup()
+    turtle.goto(x, y)
+    turtle.dot(10, 'white')
+
+def savemarguerite(x, y):
+    coordonneesmarg.append(x)
+    coordonneesmarg.append(y)
+
+
+def savemedor(x, y):
+    coordonneesmedor.append(x)
+    coordonneesmedor.append(y)
+
+
+def savefelix(x, y):
+    coordonneesfelix.append(x)
+    coordonneesfelix.append(y)
+
+
+def on_message_callback(client_inst, userdata, message ):
+    valeur = message.payload.decode("ansi")
+    #print(message.topic + " " + valeur)
+
+    liste_dico = json.loads(valeur)
+    msg= liste_dico["object"]
+    msg_2= msg["message"]
+    xy = msg_2.split(":")
+    #turtle.goto(int(xy[3]), int(xy[4]))
+    x = int(xy[1])
+    y = int(xy[2])
+    if xy[0]=='Medor':
+        dessinermedor(x, y, couleur)
+        savemedor(x ,y)
+        if point_sors_du_cercle(x, y, centre_x, centre_y, rayon):
+            print("Medor est sorti de la zone.")
+
+    if len(coordonneesmedor) > 2:
+        a = coordonneesmedor[0]
+        b = coordonneesmedor[1]
+        dessinerblanc(a , b, couleur)
+        del coordonneesmedor[1]
+        del coordonneesmedor[0]
+
+    if xy[0]=='Felix':
+        dessinerfelix(x, y, couleur)
+        savefelix(x, y)
+        if point_sors_du_cercle(x, y, centre_x, centre_y, rayon):
+            print("Felix est sorti de la zone.")
+
+    if len(coordonneesfelix) > 2:
+        a = coordonneesfelix[0]
+        b = coordonneesfelix[1]
+        dessinerblanc(a , b, couleur)
+        del coordonneesfelix[1]
+        del coordonneesfelix[0]
+
+    if xy[0]=='Marguerite':
+        dessinermarguerite(x, y, couleur)
+        savemarguerite(x, y)
+        if point_sors_du_cercle(x, y, centre_x, centre_y, rayon):
+            print("Marguerite est sortie de la zone.")
+
+
+    if len(coordonneesmarg) > 2:
+        a = coordonneesmarg[0]
+        b = coordonneesmarg[1]
+        dessinerblanc(a , b, couleur)
+        del coordonneesmarg[1]
+        del coordonneesmarg[0]
+
+# Centre du cercle
+centre_x, centre_y = 0, 0
+rayon = 300
+
+# Initialisation de Turtle
+turtle.speed(0)
+turtle.hideturtle()
+
+# Dessiner le cercle
+turtle.penup()
+turtle.goto(centre_x, centre_y - rayon)
+turtle.pendown()
+turtle.circle(rayon)
+
+client.on_message = on_message_callback
+
+client.subscribe("emulateur_colliers")
+client.loop_start()
+
+turtle.mainloop()
